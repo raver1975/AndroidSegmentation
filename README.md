@@ -6,7 +6,7 @@ This is a camera app that continuously segments the objects into 21 classes, in 
 
 The model files are downloaded via Gradle scripts when you build and run. You don't need to do any steps to download TFLite models into the project explicitly.
 
-Application can run either on device or emulator.
+Application can run either on device or emulator. Precompiled APK is also available in the repository. 
 
 <!-- TODO(b/124116863): Add app screenshot. -->
 
