@@ -20,28 +20,22 @@ import android.graphics.*;
 import android.graphics.Paint.Cap;
 import android.graphics.Paint.Join;
 import android.graphics.Paint.Style;
-import android.text.TextUtils;
-import android.util.Pair;
+import android.text.Layout;
+import android.text.StaticLayout;
+import android.text.TextPaint;
 import android.util.TypedValue;
 
 import java.util.*;
-
-import org.tensorflow.lite.examples.detection.env.BorderedText;
-import org.tensorflow.lite.examples.detection.env.ImageUtils;
-import org.tensorflow.lite.examples.detection.env.Logger;
 
 /**
  * A tracker that handles non-max suppression and matches existing objects to new detections.
  */
 public class MultiBoxTracker {
     private static final float TEXT_SIZE_DIP = 18;
-    private static int[] COLORS = makeColorGradient(.2f,.2f,.2f,0,2,4,21);
-    final List<Pair<Float, RectF>> screenRects = new LinkedList<Pair<Float, RectF>>();
-    private final Logger logger = new Logger();
+    private static Integer[] COLORS = makeColorGradient(.2f, .2f, .2f, 0, 2, 4, 21);
     private final Queue<Integer> availableColors = new LinkedList<Integer>();
     private final Paint boxPaint = new Paint();
     private final float textSizePx;
-    private final BorderedText borderedText;
     private int frameWidth;
     private int frameHeight;
     private int sensorOrientation;
@@ -53,16 +47,17 @@ public class MultiBoxTracker {
         }
 
         boxPaint.setColor(Color.RED);
-        boxPaint.setStyle(Style.STROKE);
+        boxPaint.setStyle(Style.FILL);
         boxPaint.setStrokeWidth(10.0f);
         boxPaint.setStrokeCap(Cap.ROUND);
         boxPaint.setStrokeJoin(Join.ROUND);
         boxPaint.setStrokeMiter(100);
+        boxPaint.setAntiAlias(true);
+        boxPaint.setTextSize(32 * context.getResources().getDisplayMetrics().density);
 
         textSizePx =
                 TypedValue.applyDimension(
                         TypedValue.COMPLEX_UNIT_DIP, TEXT_SIZE_DIP, context.getResources().getDisplayMetrics());
-        borderedText = new BorderedText(textSizePx);
     }
 
     public synchronized void setFrameConfiguration(
@@ -72,29 +67,33 @@ public class MultiBoxTracker {
         this.sensorOrientation = sensorOrientation;
     }
 
-    public synchronized void drawDebug(final Canvas canvas) {
-        final Paint textPaint = new Paint();
-        textPaint.setColor(Color.WHITE);
-        textPaint.setTextSize(60.0f);
-
-        final Paint boxPaint = new Paint();
-        boxPaint.setColor(Color.RED);
-//        boxPaint.setAlpha(200);
-        boxPaint.setStyle(Style.STROKE);
-        boxPaint.setStrokeWidth(1);
-
-        for (final Pair<Float, RectF> detection : screenRects) {
-            final RectF rect = detection.second;
-            canvas.drawRect(rect, boxPaint);
-            canvas.drawText("" + detection.first, rect.left, rect.top, textPaint);
-            borderedText.drawText(canvas, rect.centerX(), rect.centerY(), "" + detection.first);
-        }
-    }
-
     public synchronized void trackResults(final float[][][][] results, final long timestamp) {
         this.results = results;
     }
 
+    private static final String[] labels = new String[]{
+            "background",
+            "aeroplane",
+            "bicycle",
+            "bird",
+            "boat",
+            "bottle",
+            "bus",
+            "car",
+            "cat",
+            "chair",
+            "cow",
+            "dining table",
+            "dog",
+            "horse",
+            "motorbike",
+            "person",
+            "potted plant",
+            "sheep",
+            "sofa",
+            "train",
+            "tv"
+    };
 
     public synchronized void draw(final Canvas canvas) {
         final boolean rotated = sensorOrientation % 180 == 90;
@@ -109,19 +108,41 @@ public class MultiBoxTracker {
             float xw = w / 257f;
             float xh = h / 257f;
             RectF r = new RectF();
+            HashSet<Integer> used=new HashSet<>();
             for (int y = 0; y < 257; y++) {
                 for (int x = 0; x < 257; x++) {
                     pos = getIndexOfMax(results[0][y][x]);
                     if (pos > 0) {
-                        boxPaint.setColor(COLORS[pos % COLORS.length]);
+                        used.add(pos);
+                        boxPaint.setColor(COLORS[pos]);
                         r.left = (x / 257f * w) - xw;
                         r.right = (x / 257f * w) + xw;
                         r.bottom = (y / 257f * h) - xh;
                         r.top = (y / 257f * h) + xh;
-
                         canvas.drawRect(r, boxPaint);
                     }
                 }
+            }
+            float x=5;
+            float large=Math.max(canvas.getWidth(),canvas.getHeight());
+            float small=Math.min(canvas.getWidth(),canvas.getHeight());
+            float y=(large-small)/4;
+            float skip=boxPaint.getTextSize();
+            TextPaint textPaint = new TextPaint();
+            textPaint.setAntiAlias(true);
+            textPaint.setTextSize(boxPaint.getTextSize());
+            for (int i:used){
+                boxPaint.setColor(COLORS[i]);
+                textPaint.setColor(COLORS[i]);
+                canvas.save();
+//                canvas.drawText(labels[i],x,y,boxPaint);
+                int width = (int) boxPaint.measureText(labels[i]);
+                canvas.translate(x,y);
+                StaticLayout staticLayout = new StaticLayout(labels[i], textPaint, (int) width, Layout.Alignment.ALIGN_NORMAL, 1.0f, 0, false);
+                staticLayout.draw(canvas);
+                y+=skip;
+
+                canvas.restore();
             }
         }
     }
@@ -142,8 +163,8 @@ public class MultiBoxTracker {
         return pos;
     }
 
-    public static int[] makeColorGradient(float frequency1, float frequency2, float frequency3, float phase1, float phase2, float phase3, int len) {
-        int[] c = new int[len];
+    public static Integer[] makeColorGradient(float frequency1, float frequency2, float frequency3, float phase1, float phase2, float phase3, int len) {
+        Integer[] c = new Integer[len];
         int center = 128;
         int width = 127;
         for (int i = 0; i < len; ++i) {
@@ -152,6 +173,9 @@ public class MultiBoxTracker {
             int blu = (int) (Math.sin(frequency3 * i + phase3) * width + center);
             c[i] = Color.rgb(red, grn, blu);
         }
-        return c;
+        List<Integer> list = Arrays.asList(c);
+        Collections.shuffle(list);
+
+        return list.toArray(new Integer[]{});
     }
 }

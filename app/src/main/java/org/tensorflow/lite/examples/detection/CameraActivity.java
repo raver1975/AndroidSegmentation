@@ -65,7 +65,6 @@ public abstract class CameraActivity extends AppCompatActivity
   private static final String PERMISSION_CAMERA = Manifest.permission.CAMERA;
   protected int previewWidth = 0;
   protected int previewHeight = 0;
-  private boolean debug = false;
   private Handler handler;
   private HandlerThread handlerThread;
   private boolean useCamera2API;
@@ -463,10 +462,6 @@ public abstract class CameraActivity extends AppCompatActivity
       }
       buffer.get(yuvBytes[i]);
     }
-  }
-
-  public boolean isDebug() {
-    return debug;
   }
 
   protected void readyForNextImage() {
