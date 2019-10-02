@@ -108,7 +108,7 @@ public class MultiBoxTracker {
             float xw = w / 257f;
             float xh = h / 257f;
             RectF r = new RectF();
-            HashSet<Integer> used=new HashSet<>();
+            HashSet<Integer> used = new HashSet<>();
             for (int y = 0; y < 257; y++) {
                 for (int x = 0; x < 257; x++) {
                     pos = getIndexOfMax(results[0][y][x]);
@@ -123,24 +123,24 @@ public class MultiBoxTracker {
                     }
                 }
             }
-            float x=5;
-            float large=Math.max(canvas.getWidth(),canvas.getHeight());
-            float small=Math.min(canvas.getWidth(),canvas.getHeight());
-            float y=(large-small)/4;
-            float skip=boxPaint.getTextSize();
+            float x = 5;
+            float large = Math.max(canvas.getWidth(), canvas.getHeight());
+            float small = Math.min(canvas.getWidth(), canvas.getHeight());
+            float skip = boxPaint.getTextSize();
+            float y = (large - small) / 4 + skip/2f;
             TextPaint textPaint = new TextPaint();
             textPaint.setAntiAlias(true);
             textPaint.setTextSize(boxPaint.getTextSize());
-            for (int i:used){
+            for (int i : used) {
                 boxPaint.setColor(COLORS[i]);
                 textPaint.setColor(COLORS[i]);
                 canvas.save();
 //                canvas.drawText(labels[i],x,y,boxPaint);
                 int width = (int) boxPaint.measureText(labels[i]);
-                canvas.translate(x,y);
+                canvas.translate(x, y);
                 StaticLayout staticLayout = new StaticLayout(labels[i], textPaint, (int) width, Layout.Alignment.ALIGN_NORMAL, 1.0f, 0, false);
                 staticLayout.draw(canvas);
-                y+=skip;
+                y += skip;
 
                 canvas.restore();
             }
