@@ -94,7 +94,6 @@ public class MultiBoxTracker {
             "train",
             "tv"
     };
-
     public synchronized void draw(final Canvas canvas) {
         final boolean rotated = sensorOrientation % 180 == 90;
         final float multiplier =
@@ -103,7 +102,7 @@ public class MultiBoxTracker {
                         canvas.getWidth() / (float) (rotated ? frameHeight : frameWidth));
         int w = (int) (multiplier * (rotated ? frameHeight : frameWidth));
         int h = (int) (multiplier * (rotated ? frameWidth : frameHeight));
-        if (results != null) {
+                if (results != null) {
             int pos = 0;
             float xw = w / 257f;
             float xh = h / 257f;
@@ -116,9 +115,9 @@ public class MultiBoxTracker {
                         used.add(pos);
                         boxPaint.setColor(COLORS[pos]);
                         r.left = (x / 257f * w) - xw;
+                        r.top = (y / 257f * h) - xh;
                         r.right = (x / 257f * w) + xw;
-                        r.bottom = (y / 257f * h) - xh;
-                        r.top = (y / 257f * h) + xh;
+                        r.bottom = (y / 257f * h) + xh;
                         canvas.drawRect(r, boxPaint);
                     }
                 }
@@ -141,9 +140,9 @@ public class MultiBoxTracker {
                 StaticLayout staticLayout = new StaticLayout(labels[i], textPaint, (int) width, Layout.Alignment.ALIGN_NORMAL, 1.0f, 0, false);
                 staticLayout.draw(canvas);
                 y += skip;
-
                 canvas.restore();
             }
+
         }
     }
 
